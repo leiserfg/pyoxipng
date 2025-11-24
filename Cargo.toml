@@ -9,5 +9,5 @@ name = "oxipng"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.25.1", features = ["extension-module"] }
+pyo3 = { version = "0.25.1", features = ["abi3-py38", "extension-module"] }
 oxipng = { version = "9.1.*" }

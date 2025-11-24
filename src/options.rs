@@ -14,11 +14,8 @@ pub fn parse_kw_opts(kwds: Option<&Bound<'_, PyDict>>) -> PyResult<oxi::Options>
 
 pub fn parse_kw_opts_dict(kwops: &Bound<'_, PyDict>) -> PyResult<oxi::Options> {
     let mut opts = if let Some(level) = kwops.get_item("level")? {
-        let level: u8 = level.extract().or_else(|err| {
-            Err(PyValueError::new_err(format!(
-                "Invalid optimization level; countered {}",
-                err
-            )))
+        let level: u8 = level.extract().map_err(|err| {
+            PyValueError::new_err(format!("Invalid optimization level; countered {}", err))
         })?;
         if level > 6 {
             return Err(PyValueError::new_err(
@@ -32,12 +29,9 @@ pub fn parse_kw_opts_dict(kwops: &Bound<'_, PyDict>) -> PyResult<oxi::Options> {
 
     for (k, v) in kwops.iter() {
         let key = k.downcast::<PyString>()?;
-        let key = key.to_str()?;
-        parse_kw_opt(key, &v, &mut opts).or_else(|err| {
-            Err(PyTypeError::new_err(format!(
-                "Invalid option '{}'; encountered {}",
-                key, err
-            )))
+        let key = key.to_string();
+        parse_kw_opt(&key, &v, &mut opts).map_err(|err| {
+            PyTypeError::new_err(format!("Invalid option '{}'; encountered {}", key, err))
         })?;
     }
     Ok(opts)
