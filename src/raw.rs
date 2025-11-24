@@ -116,10 +116,9 @@ impl RawImage {
     }
 
     #[pyo3(signature = (**kwargs))]
-    fn create_optimized_png<'a>(&self, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Cow<[u8]>> {
+    fn create_optimized_png(&self, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Cow<'_, [u8]>> {
         self.0
-            .create_optimized_png(&options::parse_kw_opts(kwargs)?)
-            .and_then(|data| Ok(data.into()))
+            .create_optimized_png(&options::parse_kw_opts(kwargs)?).map(|data| data.into())
             .or_else(error::handle_png_error)
     }
 }

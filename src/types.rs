@@ -1,6 +1,6 @@
 use ::oxipng as oxi;
 use core::time::Duration;
-use pyo3::exceptions::PyTypeError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
@@ -187,19 +187,26 @@ impl Deflaters {
 }
 
 /// Extract a python value that may be None
-pub fn py_option<'a, T: FromPyObject<'a>>(val: &Bound<'a, PyAny>) -> PyResult<Option<T>> {
+pub fn py_option<'py, 'a, T>(val: &'py Bound<'py, PyAny>) -> PyResult<Option<T>>
+where
+    T: FromPyObject<'a, 'py>,
+    'py: 'a,
+{
     if val.is_none() {
         Ok(None)
     } else {
-        Ok(Some(val.extract()?))
+        Ok(Some(val.extract().map_err(|_| {
+            PyValueError::new_err("Value can't be extracted")
+        })?))
     }
 }
 
 /// Extract a python value that may be None and convert to another type
-pub fn py_option_extract<'a, T, U>(val: &Bound<'a, PyAny>) -> PyResult<Option<U>>
+pub fn py_option_extract<'py, 'a, T, U>(val: &'py Bound<'py, PyAny>) -> PyResult<Option<U>>
 where
-    T: FromPyObject<'a>,
+    T: FromPyObject<'a, 'py>,
     U: From<T>,
+    'py: 'a,
 {
     Ok(py_option::<T>(val)?.and_then(|v| Some(v.into())))
 }
